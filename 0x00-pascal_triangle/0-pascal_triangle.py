@@ -1,3 +1,7 @@
+#!/usr/bin/python3
+"""Pascal's Triangle"""
+
+
 def pascal_triangle(n):
     """ Pascal triangle"""
     if n <= 0:
@@ -15,8 +19,7 @@ def pascal_triangle(n):
             else:
                 # The value of an element is the sum of the two elements above it
                 value = triangle[row - 1][col - 1] + triangle[row - 1][col]
-                current_row.append(value)
-        
+                current_row.append(value)        
         triangle.append(current_row)
     
     return triangle
