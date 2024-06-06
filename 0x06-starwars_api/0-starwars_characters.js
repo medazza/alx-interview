@@ -1,45 +1,37 @@
 #!/usr/bin/node
-const http = require("https");
-const API_ENDPOINT = "https://swapi-api.hbtn.io/api";
+const request = require("request");
+const API_URL = "https://swapi-api.hbtn.io/api";
 
-if (process.argv.length > 2) {
-  const filmId = process.argv[2];
-  fetchFilmCharacters(filmId)
-    .then((characterNames) => console.log(characterNames.join("\n")))
-    .catch((error) => console.error(error));
-}
-
-function fetchFilmCharacters(filmId) {
+function fetchFilmCharacterNames(filmId) {
   return new Promise((resolve, reject) => {
-    http
-      .get(`${API_ENDPOINT}/films/${filmId}/`, (response) => {
-        let data = "";
-        response.on("data", (chunk) => {
-          data += chunk;
-        });
-        response.on("end", () => {
-          const { characters } = JSON.parse(data);
-          Promise.all(characters.map(fetchCharacterName))
-            .then(resolve)
-            .catch(reject);
-        });
-      })
-      .on("error", reject);
+    request(`${API_URL}/films/${filmId}/`, (err, _, body) => {
+      if (err) {
+        reject(err);
+      } else {
+        const characterUrls = JSON.parse(body).characters;
+        Promise.all(characterUrls.map(fetchCharacterName))
+          .then(resolve)
+          .catch(reject);
+      }
+    });
   });
 }
 
 function fetchCharacterName(characterUrl) {
   return new Promise((resolve, reject) => {
-    http
-      .get(characterUrl, (response) => {
-        let data = "";
-        response.on("data", (chunk) => {
-          data += chunk;
-        });
-        response.on("end", () => {
-          resolve(JSON.parse(data).name);
-        });
-      })
-      .on("error", reject);
+    request(characterUrl, (err, _, body) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(JSON.parse(body).name);
+      }
+    });
   });
+}
+
+if (process.argv.length > 2) {
+  const filmId = process.argv[2];
+  fetchFilmCharacterNames(filmId)
+    .then((names) => console.log(names.join("\n")))
+    .catch((error) => console.error(error));
 }
