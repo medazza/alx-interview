@@ -1,37 +1,56 @@
 #!/usr/bin/node
 const request = require("request");
-const API_URL = "https://swapi-api.hbtn.io/api";
 
-function fetchFilmCharacterNames(filmId) {
-  return new Promise((resolve, reject) => {
-    request(`${API_URL}/films/${filmId}/`, (err, _, body) => {
-      if (err) {
-        reject(err);
+const movieId = process.argv[2];
+const filmEndPoint = "https://swapi-api.hbtn.io/api/films/" + movieId;
+let people = [];
+const names = [];
+
+const requestCharacters = async () => {
+  await new Promise((resolve) =>
+    request(filmEndPoint, (err, res, body) => {
+      if (err || res.statusCode !== 200) {
+        console.error("Error: ", err, "| StatusCode: ", res.statusCode);
       } else {
-        const characterUrls = JSON.parse(body).characters;
-        Promise.all(characterUrls.map(fetchCharacterName))
-          .then(resolve)
-          .catch(reject);
+        const jsonBody = JSON.parse(body);
+        people = jsonBody.characters;
+        resolve();
       }
-    });
-  });
-}
+    })
+  );
+};
 
-function fetchCharacterName(characterUrl) {
-  return new Promise((resolve, reject) => {
-    request(characterUrl, (err, _, body) => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve(JSON.parse(body).name);
-      }
-    });
-  });
-}
+const requestNames = async () => {
+  if (people.length > 0) {
+    for (const p of people) {
+      await new Promise((resolve) =>
+        request(p, (err, res, body) => {
+          if (err || res.statusCode !== 200) {
+            console.error("Error: ", err, "| StatusCode: ", res.statusCode);
+          } else {
+            const jsonBody = JSON.parse(body);
+            names.push(jsonBody.name);
+            resolve();
+          }
+        })
+      );
+    }
+  } else {
+    console.error("Error: Got no Characters for some reason");
+  }
+};
 
-if (process.argv.length > 2) {
-  const filmId = process.argv[2];
-  fetchFilmCharacterNames(filmId)
-    .then((names) => console.log(names.join("\n")))
-    .catch((error) => console.error(error));
-}
+const getCharNames = async () => {
+  await requestCharacters();
+  await requestNames();
+
+  for (const n of names) {
+    if (n === names[names.length - 1]) {
+      process.stdout.write(n);
+    } else {
+      process.stdout.write(n + "\n");
+    }
+  }
+};
+
+getCharNames();
