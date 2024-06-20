@@ -12,7 +12,8 @@ def makeChange(coins, total):
         amount (int): The target amount to make change for.
 
     Returns:
-        int: The minimum number of coins required to make the given amount, or -1 if it's not possible.
+        int: The minimum number of coins required to make the given amount,
+        or -1 if it's not possible.
     """
     dp = [float('inf')] * (total + 1)
     dp[0] = 0
